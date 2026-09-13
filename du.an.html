@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TK COFFEE &amp; Chọn món</title>
+<style>
+  * { box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #12111c;
+    --bg-mid: #1c1a2b;
+    --card-bg: rgba(28, 25, 43, 0.72);
+    --card-border: rgba(232, 199, 130, 0.16);
+    --ink: #f3efe4;
+    --ink-soft: #a79fc0;
+    --amber: #f2b25c;
+    --amber-soft: #ffe6b3;
+    --amber-deep: #d99a3f;
+    --error: #e08a8a;
+    --success: #9fd8a0;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 100%, var(--bg-mid), var(--bg-deep) 70%);
+    font-family: 'Segoe UI', Arial, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ================= AUTH SCENE ================= */
+  #authScene {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scene {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 50px;
+    padding: 40px 20px;
+  }
+
+  .lamp {
+    position: relative;
+    width: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    z-index: 2;
+  }
+
+  .lamp-shade {
+    width: 160px;
+    height: 90px;
+    background: linear-gradient(180deg, #e9dcc4, #d9c69f);
+    border-radius: 50% 50% 5% 5% / 90% 90% 10% 10%;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    position: relative;
+    transition: box-shadow 0.4s ease;
+  }
+
+  .bulb-glow {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--amber-soft);
+    opacity: 0;
+    filter: blur(2px);
+    transition: opacity 0.4s ease;
+  }
+
+  .lamp-pole {
+    width: 8px;
+    height: 140px;
+    background: linear-gradient(to right, #7a725f, #a4998077);
+  }
+
+  .lamp-base {
+    width: 90px;
+    height: 12px;
+    background: linear-gradient(to right, #7a725f, #a49980);
+    border-radius: 4px;
+  }
+
+  .pull-cord {
+    position: absolute;
+    top: 78px;
+    left: 50%;
+    width: 2px;
+    height: 45px;
+    background: #6b6355;
+    transform-origin: top center;
+    transition: transform 0.15s ease;
+  }
+  .pull-cord::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6b6355;
+  }
+  .lamp:active .pull-cord { transform: translateY(4px); }
+
+  .light-cone {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 560px;
+    height: 560px;
+    background: radial-gradient(ellipse at top, rgba(242, 178, 92, 0.32) 0%, rgba(242, 178, 92, 0) 65%);
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  body.lamp-on .lamp-shade {
+    box-shadow: 0 0 44px 14px rgba(242, 178, 92, 0.5), 0 4px 10px rgba(0,0,0,0.4);
+  }
+  body.lamp-on .bulb-glow { opacity: 1; }
+  body.lamp-on .light-cone { opacity: 1; }
+
+  .auth-card {
+    width: 290px;
+    padding: 30px 28px;
+    border-radius: 18px;
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--card-border);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    z-index: 2;
+  }
+
+  body.lamp-on .auth-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+
+  .auth-card h2 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 500;
+    font-size: 26px;
+    color: var(--amber-soft);
+    text-align: center;
+    margin: 0 0 4px;
+    letter-spacing: 0.3px;
+  }
+
+  .auth-sub {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin: 0 0 22px;
+  }
+
+  .tabs {
+    display: flex;
+    background: rgba(255,255,255,0.05);
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 22px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .tab-btn.active {
+    background: var(--amber-deep);
+    color: #1c1408;
+    font-weight: 600;
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-group label {
+    display: block;
+    color: var(--ink-soft);
+    font-size: 12.5px;
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: var(--ink);
+    font-size: 14px;
+    outline: none;
+    transition: border 0.3s ease, background 0.3s ease;
+  }
+
+  .form-group input:focus {
+    border-color: var(--amber);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 11px;
+    margin-top: 6px;
+    border: none;
+    border-radius: 9px;
+    background: linear-gradient(180deg, var(--amber), var(--amber-deep));
+    color: #241705;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: filter 0.25s ease;
+  }
+  .submit-btn:hover { filter: brightness(1.08); }
+
+  .msg { margin-top: 14px; font-size: 12.5px; text-align: center; min-height: 16px; }
+  .msg.error { color: var(--error); }
+  .msg.success { color: var(--success); }
+
+  .form-panel { display: none; }
+  .form-panel.active { display: block; }
+
+  .hint {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #6a6480;
+    font-size: 12.5px;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* ================= MENU SCENE ================= */
+  #menuScene {
+    display: none;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+  }
+
+  .menu-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  .menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 34px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .menu-header h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 500;
+    font-size: 24px;
+    color: var(--amber-soft);
+    margin: 0;
+  }
+
+  .menu-header .greet {
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .logout-btn {
+    padding: 9px 16px;
+    border-radius: 9px;
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease;
+  }
+  .logout-btn:hover { border-color: var(--amber); color: var(--amber-soft); }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .category-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.25s ease, transform 0.2s ease, background 0.25s ease;
+  }
+
+  .category-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--amber);
+  }
+
+  .category-card.active {
+    background: rgba(242, 178, 92, 0.14);
+    border-color: var(--amber);
+  }
+
+  .category-card .icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .category-card .name {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .items-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 22px 24px;
+    display: none;
+  }
+
+  .items-panel.active { display: block; }
+
+  .items-panel h3 {
+    color: var(--amber-soft);
+    font-family: Georgia, serif;
+    font-weight: 500;
+    margin: 0 0 16px;
+    font-size: 18px;
+  }
+
+  .item-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .item-chip {
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.04);
+    color: var(--ink);
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+
+  .item-chip:hover { border-color: var(--amber); }
+
+  .item-chip.selected {
+    background: var(--amber-deep);
+    border-color: var(--amber-deep);
+    color: #241705;
+    font-weight: 600;
+  }
+
+  .selection-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .selection-bar .selected-text {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+  }
+
+  .selection-bar .selected-text strong { color: var(--amber-soft); }
+
+  .confirm-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 9px;
+    background: linear-gradient(180deg, var(--amber), var(--amber-deep));
+    color: #241705;
+    font-weight: 600;
+    font-size: 13.5px;
+    cursor: pointer;
+    transition: filter 0.25s ease, opacity 0.25s ease;
+  }
+  .confirm-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .confirm-btn:not(:disabled):hover { filter: brightness(1.08); }
+
+  .order-result {
+    margin-top: 24px;
+    background: rgba(242, 178, 92, 0.1);
+    border: 1px solid var(--amber-deep);
+    border-radius: 14px;
+    padding: 18px 22px;
+    color: var(--ink);
+    font-size: 14px;
+    display: none;
+  }
+  .order-result.active { display: block; }
+  .order-result strong { color: var(--amber-soft); }
+
+  /* ================= ADDRESS SCENE ================= */
+  #addressScene {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .address-wrap {
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .address-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 28px 26px;
+  }
+
+  .address-card h2 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 500;
+    font-size: 20px;
+    color: var(--amber-soft);
+    margin: 0 0 12px;
+  }
+
+  .order-summary {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .order-summary strong { color: var(--amber-soft); }
+
+  .address-card textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 9px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: var(--ink);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border 0.3s ease, background 0.3s ease;
+  }
+  .address-card textarea:focus {
+    border-color: var(--amber);
+    background: rgba(255,255,255,0.08);
+  }
+
+  .address-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .back-btn {
+    flex: 1;
+    padding: 11px;
+    border-radius: 9px;
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.25s ease, color 0.25s ease;
+  }
+  .back-btn:hover { border-color: var(--amber); color: var(--amber-soft); }
+
+  .address-actions .submit-btn { flex: 1; margin-top: 0; }
+</style>
+
+</head>
+<body>
+
+  <!-- ================= AUTH SCENE ================= -->
+  <div id="authScene">
+    <div class="scene">
+      <div class="lamp" id="lampToggle" title="Bấm để bật/tắt đèn">
+        <div class="light-cone"></div>
+        <div class="pull-cord"></div>
+        <div class="lamp-shade">
+          <div class="bulb-glow"></div>
+        </div>
+        <div class="lamp-pole"></div>
+        <div class="lamp-base"></div>
+      </div>
+
+      <div class="auth-card">
+        <h2>Chill nheee</h2>
+        <p class="auth-sub">Đăng nhập để order</p>
+
+        <div class="tabs" id="tabs">
+          <button class="tab-btn active" data-tab="login">Đăng nhập đê</button>
+          <button class="tab-btn" data-tab="register">Đăng ký đi </button>
+        </div>
+
+        <form class="form-panel active" id="loginPanel" onsubmit="return false;">
+          <div class="form-group">
+            <label>Tên đăng nhập</label>
+            <input type="text" id="loginUser" placeholder="vd: coding.stella" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="loginPass" placeholder="Nhập mật khẩu" autocomplete="current-password">
+          </div>
+          <button class="submit-btn" id="loginBtn">Đăng nhập</button>
+          <div class="msg" id="loginMsg"></div>
+        </form>
+
+        <form class="form-panel" id="registerPanel" onsubmit="return false;">
+          <div class="form-group">
+            <label>Tên đăng nhập</label>
+            <input type="text" id="regUser" placeholder="Chọn một tên đăng nhập" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label>Mật khẩu</label>
+            <input type="password" id="regPass" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>Nhập lại mật khẩu</label>
+            <input type="password" id="regPass2" placeholder="Nhập lại mật khẩu" autocomplete="new-password">
+          </div>
+          <button class="submit-btn" id="registerBtn">Tạo tài khoản</button>
+          <div class="msg" id="registerMsg"></div>
+        </form>
+      </div>
+    </div>
+    <div class="hint">Bấm vào bóng đèn để bật / tắt · Tài khoản chỉ lưu trên trình duyệt này (demo)</div>
+  </div>
+
+  <!-- ================= MENU SCENE ================= -->
+  <div id="menuScene">
+    <div class="menu-wrap">
+      <div class="menu-header">
+        <div>
+          <h1>Mày muốn dùng gì hôm nay?</h1>
+          <div class="greet">KIMOCHIIII, <strong id="menuUserName"></strong></div>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Đăng xuất</button>
+      </div>
+
+      <div class="category-grid" id="categoryGrid"></div>
+
+      <div class="items-panel" id="itemsPanel">
+        <h3 id="itemsTitle"></h3>
+        <div class="item-chips" id="itemChips"></div>
+        <div class="selection-bar">
+          <div class="selected-text">Mày chắc chưa ?: <strong id="selectedItemText">chọn món đi má</strong></div>
+          <button class="confirm-btn" id="confirmBtn" disabled>Xác nhận</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= ADDRESS SCENE ================= -->
+  <div id="addressScene" style="display:none;">
+    <div class="address-wrap">
+      <div class="address-card">
+        <h2>Gần xong rồi, nhập địa chỉ nhận hàng nha</h2>
+        <div class="order-summary" id="orderSummary"></div>
+
+        <form class="form-panel active" id="addrForm" onsubmit="return false;">
+          <div class="form-group">
+            <label>Họ và tên người nhận</label>
+            <input type="text" id="addrName" placeholder="vd: Nguyễn Văn A">
+          </div>
+          <div class="form-group">
+            <label>Số điện thoại</label>
+            <input type="tel" id="addrPhone" placeholder="vd: 0912 345 678">
+          </div>
+          <div class="form-group">
+            <label>Địa chỉ nhận hàng</label>
+            <textarea id="addrAddress" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Ghi chú (không bắt buộc)</label>
+            <textarea id="addrNote" rows="2" placeholder="vd: Giao giờ hành chính, gọi trước khi tới..."></textarea>
+          </div>
+
+          <div class="address-actions">
+            <button type="button" class="back-btn" id="backToMenuBtn">Quay lại chọn món</button>
+            <button type="button" class="submit-btn" id="submitAddressBtn">Xác nhận đặt hàng</button>
+          </div>
+          <div class="msg" id="addrMsg"></div>
+        </form>
+      </div>
+
+      <div class="order-result" id="orderResult"></div>
+    </div>
+  </div>
+
+<script>
+  // ---------- Data ----------
+  const MENU = {
+    coffee:    { name: 'Cà phê',            icon: '☕', items: ['Đen bé ơi', 'Nâu bé ơi', 'Xỉu up Xỉu down', 'Cappuccino', 'Latte'] },
+    juice:     { name: 'Nước ép trái cây',   icon: '🍹', items: ['Cam ép', 'Dưa hấu', 'Dứa', 'Táo', 'Cà rốt'] },
+    matcha:    { name: 'Matcha',            icon: '🍵', items: ['Matcha xáy đa', 'Matcha latte', 'Matcha meme', 'Tuesday'] },
+    chocolate: { name: 'Chocolate',         icon: '🍫', items: ['Chocolate xáy đa', 'Choco lattle', 'Choco meme'] },
+    pastry:    { name: 'Bánh ngọt',         icon: '🧁', items: ['Hạnh phúc bên người ấy', 'Tiramisu', 'Bánh xoài', 'Su kem'] }
+  };
+
+  let selectedCategory = null;
+  let selectedItem = null;
+
+  // ---------- Lamp toggle ----------
+  const lamp = document.getElementById('lampToggle');
+  lamp.addEventListener('click', () => {
+    document.body.classList.toggle('lamp-on');
+  });
+
+  // ---------- Auth tabs ----------
+  const tabs = document.getElementById('tabs');
+  const loginPanel = document.getElementById('loginPanel');
+  const registerPanel = document.getElementById('registerPanel');
+
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const target = btn.dataset.tab;
+    loginPanel.classList.toggle('active', target === 'login');
+    registerPanel.classList.toggle('active', target === 'register');
+  });
+
+  // ---------- Storage helpers (DEMO ONLY — browser-local, not secure) ----------
+  const STORAGE_KEY = 'demo_accounts';
+  const SESSION_KEY = 'demo_session_user';
+
+  function getAccounts() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveAccounts(accounts) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+  }
+  function showMsg(el, text, type) {
+    el.textContent = text;
+    el.className = 'msg ' + (type || '');
+  }
+
+  // ---------- Scene switching ----------
+  function showScene(id) {
+    ['authScene', 'menuScene', 'addressScene'].forEach(sceneId => {
+      document.getElementById(sceneId).style.display = (sceneId === id) ? 'block' : 'none';
+    });
+  }
+
+  function goToMenu(username) {
+    showScene('menuScene');
+    document.getElementById('menuUserName').textContent = username;
+  }
+  function goToAuth() {
+    showScene('authScene');
+    document.body.classList.remove('lamp-on');
+    loginPanel.classList.add('active');
+    registerPanel.classList.remove('active');
+    tabs.querySelector('[data-tab="login"]').classList.add('active');
+    tabs.querySelector('[data-tab="register"]').classList.remove('active');
+  }
+
+  function goToAddress() {
+    if (!selectedCategory || !selectedItem) return;
+    const cat = MENU[selectedCategory];
+
+    document.getElementById('orderSummary').innerHTML =
+      `Món đã chọn: <strong>${cat.icon} ${selectedItem}</strong> — nhóm <strong>${cat.name}</strong>`;
+
+    document.getElementById('addrName').value = '';
+    document.getElementById('addrPhone').value = '';
+    document.getElementById('addrAddress').value = '';
+    document.getElementById('addrNote').value = '';
+    showMsg(document.getElementById('addrMsg'), '', '');
+    document.getElementById('orderResult').classList.remove('active');
+    document.getElementById('orderResult').innerHTML = '';
+    document.getElementById('addrForm').style.display = '';
+
+    showScene('addressScene');
+  }
+
+  // ---------- Register ----------
+  document.getElementById('registerBtn').addEventListener('click', () => {
+    const user = document.getElementById('regUser').value.trim();
+    const pass = document.getElementById('regPass').value;
+    const pass2 = document.getElementById('regPass2').value;
+    const msg = document.getElementById('registerMsg');
+
+    if (!user || !pass) { showMsg(msg, 'Vui lòng điền đầy đủ thông tin.', 'error'); return; }
+    if (pass.length < 6) { showMsg(msg, 'Mật khẩu cần ít nhất 6 ký tự.', 'error'); return; }
+    if (pass !== pass2) { showMsg(msg, 'Mật khẩu nhập lại không khớp.', 'error'); return; }
+
+    const accounts = getAccounts();
+    if (accounts[user]) { showMsg(msg, 'Tên đăng nhập đã tồn tại.', 'error'); return; }
+
+    accounts[user] = { password: pass };
+    saveAccounts(accounts);
+    showMsg(msg, 'Tạo tài khoản thành công! Đang vào menu...', 'success');
+
+    setTimeout(() => {
+      localStorage.setItem(SESSION_KEY, user);
+      goToMenu(user);
+    }, 700);
+  });
+
+  // ---------- Login ----------
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const msg = document.getElementById('loginMsg');
+
+    const accounts = getAccounts();
+    if (!accounts[user] || accounts[user].password !== pass) {
+      showMsg(msg, 'Sai tên đăng nhập hoặc mật khẩu kia kìa.', 'error');
+      return;
+    }
+    showMsg(msg, 'Đăng nhập thành công!', 'success');
+    localStorage.setItem(SESSION_KEY, user);
+    setTimeout(() => goToMenu(user), 400);
+  });
+
+  // ---------- Logout ----------
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem(SESSION_KEY);
+    selectedCategory = null;
+    selectedItem = null;
+    document.getElementById('itemsPanel').classList.remove('active');
+    goToAuth();
+  });
+
+  // ---------- Build category grid ----------
+  const categoryGrid = document.getElementById('categoryGrid');
+  Object.keys(MENU).forEach(key => {
+    const cat = MENU[key];
+    const card = document.createElement('div');
+    card.className = 'category-card';
+    card.dataset.key = key;
+    card.innerHTML = `<span class="icon">${cat.icon}</span><span class="name">${cat.name}</span>`;
+    card.addEventListener('click', () => selectCategory(key));
+    categoryGrid.appendChild(card);
+  });
+
+  function selectCategory(key) {
+    selectedCategory = key;
+    selectedItem = null;
+
+    categoryGrid.querySelectorAll('.category-card').forEach(c => {
+      c.classList.toggle('active', c.dataset.key === key);
+    });
+
+    const cat = MENU[key];
+    document.getElementById('itemsTitle').textContent = `${cat.icon} ${cat.name} — chọn món bạn thích`;
+
+    const chipsWrap = document.getElementById('itemChips');
+    chipsWrap.innerHTML = '';
+    cat.items.forEach(item => {
+      const chip = document.createElement('div');
+      chip.className = 'item-chip';
+      chip.textContent = item;
+      chip.addEventListener('click', () => selectItem(item, chip));
+      chipsWrap.appendChild(chip);
+    });
+
+    document.getElementById('selectedItemText').textContent = 'chưa chọn món';
+    document.getElementById('confirmBtn').disabled = true;
+    document.getElementById('itemsPanel').classList.add('active');
+  }
+
+  function selectItem(item, chipEl) {
+    selectedItem = item;
+    document.querySelectorAll('.item-chip').forEach(c => c.classList.remove('selected'));
+    chipEl.classList.add('selected');
+    document.getElementById('selectedItemText').textContent = item;
+    document.getElementById('confirmBtn').disabled = false;
+  }
+
+  document.getElementById('confirmBtn').addEventListener('click', () => {
+ goToAddress();
+  });
+
+  // ---------- Quay lại màn chọn món ----------
+  document.getElementById('backToMenuBtn').addEventListener('click', () => {
+    showScene('menuScene');
+  });
+
+  // ---------- Xác nhận đặt hàng (sau khi nhập địa chỉ) ----------
+  document.getElementById('submitAddressBtn').addEventListener('click', () => {
+    const name = document.getElementById('addrName').value.trim();
+    const phone = document.getElementById('addrPhone').value.trim();
+    const address = document.getElementById('addrAddress').value.trim();
+    const note = document.getElementById('addrNote').value.trim();
+    const msg = document.getElementById('addrMsg');
+
+    if (!name || !phone || !address) {
+      showMsg(msg, 'Vui lòng điền đầy đủ thông tin.', 'error');
+      return;
+    }
+
+    const cat = MENU[selectedCategory];
+    const result = document.getElementById('orderResult');
+    result.innerHTML = `
+      Đặt hàng thành công! 🎉<br>
+      Món: <strong>${cat.icon} ${selectedItem}</strong> sẽ được giao đến:<br>
+      Người nhận: <strong>${name}</strong><br>
+      Số điện thoại: <strong>${phone}</strong><br>
+      Địa chỉ: <strong>${address}</strong><br>
+      Ghi chú: <strong>${note || 'Không có'}</strong><br>
+      Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!
+    `;
+    result.classList.add('active');
+    showMsg(msg, '', '');
+    document.getElementById('addrForm').style.display = 'none';
+  });
+
+  // ---------- Restore session on load ----------
+  window.addEventListener('DOMContentLoaded', () => {
+    const saved = localStorage.getItem(SESSION_KEY);
+    if (saved) {
+      goToMenu(saved);
+    }
+  });
+</script>
+
+</body>
+</html>
